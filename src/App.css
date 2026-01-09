@@ -454,6 +454,105 @@
   margin-top: 0.25rem;
 }
 
+/* Flip counter & Pro badge */
+.flip-counter {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 0.5rem;
+}
+
+.upgrade-link {
+  background: none;
+  border: none;
+  color: var(--accent-amber);
+  cursor: pointer;
+  margin-left: 0.5rem;
+  text-decoration: underline;
+  font-size: 0.75rem;
+}
+
+.upgrade-link:hover {
+  color: var(--accent-glow);
+}
+
+.pro-badge {
+  font-size: 0.75rem;
+  color: var(--accent-glow);
+  margin-top: 0.5rem;
+}
+
+/* Paywall modal */
+.paywall-modal {
+  text-align: center;
+}
+
+.paywall-modal h2 {
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.paywall-message {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.price-box {
+  background: var(--bg-elevated);
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.price {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--accent-glow);
+}
+
+.price-period {
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.pro-features {
+  list-style: none;
+  text-align: left;
+  margin-bottom: 1.5rem;
+}
+
+.pro-features li {
+  padding: 0.5rem 0;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--bg-elevated);
+}
+
+.pro-features li:last-child {
+  border-bottom: none;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.btn-large {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.1rem;
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}
+
+.btn-text:hover {
+  color: var(--text-muted);
+}
+
 .modal-actions {
   display: flex;
   gap: 0.75rem;

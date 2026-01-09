@@ -8,6 +8,21 @@ function App() {
   const [isRecording, setIsRecording] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showPaywall, setShowPaywall] = useState(false)
+  const [isPro, setIsPro] = useState(() => localStorage.getItem('flipPro') === 'true')
+  const [flipsToday, setFlipsToday] = useState(() => {
+    const saved = localStorage.getItem('flipCount')
+    if (saved) {
+      const { count, date } = JSON.parse(saved)
+      // Reset if it's a new day
+      if (date !== new Date().toDateString()) {
+        return 0
+      }
+      return count
+    }
+    return 0
+  })
+  const FREE_FLIPS = 5
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('flipSettings')
     return saved ? JSON.parse(saved) : { anthropicKey: '', elevenLabsKey: '', voiceId: 'EXAVITQu4vr4xnSDxMaL', language: 'en', darkHumor: 0 }
@@ -57,11 +72,48 @@ function App() {
     localStorage.setItem('flipSettings', JSON.stringify(settings))
   }, [settings])
 
+  // Check for successful payment return
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('success') === 'true') {
+      setIsPro(true)
+      localStorage.setItem('flipPro', 'true')
+      window.history.replaceState({}, '', '/') // Clean URL
+    }
+  }, [])
+
+  // Save flip count
+  useEffect(() => {
+    localStorage.setItem('flipCount', JSON.stringify({
+      count: flipsToday,
+      date: new Date().toDateString()
+    }))
+  }, [flipsToday])
+
+  const handleUpgrade = async () => {
+    try {
+      const res = await fetch('/api/stripe/checkout', { method: 'POST' })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } catch (error) {
+      console.error('Checkout error:', error)
+    }
+  }
+
   const flipThought = async () => {
     if (!thought.trim() || isLoading) return
 
+    // Check usage limit (unless Pro)
+    if (!isPro && flipsToday >= FREE_FLIPS) {
+      setShowPaywall(true)
+      return
+    }
+
     setIsLoading(true)
     setResponse('')
+    setFlipsToday(prev => prev + 1)
 
     try {
       const res = await fetch('/api/flip', {
@@ -196,6 +248,13 @@ function App() {
           <h1>FLIP THE SWITCH</h1>
         </div>
         <p className="tagline">Transform your thoughts. You don't suck...that much.</p>
+        {!isPro && (
+          <p className="flip-counter">
+            {FREE_FLIPS - flipsToday} free flips left today
+            <button className="upgrade-link" onClick={() => setShowPaywall(true)}>Go Pro</button>
+          </p>
+        )}
+        {isPro && <p className="pro-badge">⭐ PRO</p>}
       </header>
 
       <main className="main">
@@ -385,12 +444,43 @@ function App() {
         </div>
       )}
 
-      <audio 
+<audio 
         ref={audioRef} 
         onEnded={() => setIsPlaying(false)}
         onError={() => setIsPlaying(false)}
       />
-      </div>
+
+      {showPaywall && (
+        <div className="modal-overlay" onClick={() => setShowPaywall(false)}>
+          <div className="modal paywall-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>You've used your free flips! 🎚️</h2>
+            <p className="paywall-message">
+              Look, mental health support shouldn't be expensive. That's why we keep it cheap.
+            </p>
+            
+            <div className="price-box">
+              <span className="price">$2.99</span>
+              <span className="price-period">/month</span>
+            </div>
+            
+            <ul className="pro-features">
+              <li>✓ Unlimited flips</li>
+              <li>✓ All voices & languages</li>
+              <li>✓ Dark humor slider</li>
+              <li>✓ Support someone with PTSD building cool shit</li>
+            </ul>
+
+            <button className="btn btn-primary btn-large" onClick={handleUpgrade}>
+              Flip the Switch to Pro
+            </button>
+            
+            <button className="btn-text" onClick={() => setShowPaywall(false)}>
+              Maybe tomorrow
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

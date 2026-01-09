@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import express from 'express'
 import Anthropic from '@anthropic-ai/sdk'
+import Stripe from 'stripe'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 
@@ -10,8 +11,40 @@ const __dirname = dirname(__filename)
 // Load environment variables
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
 const ELEVEN_LABS_API_KEY = process.env.ELEVEN_LABS_API_KEY
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET
+const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID
+
+const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null
 
 const app = express()
+
+// Stripe webhook needs raw body
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  if (!stripe || !STRIPE_WEBHOOK_SECRET) {
+    return res.status(400).json({ error: 'Stripe not configured' })
+  }
+
+  const sig = req.headers['stripe-signature']
+  let event
+
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK_SECRET)
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err.message)
+    return res.status(400).send(`Webhook Error: ${err.message}`)
+  }
+
+  // Handle the event
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object
+    console.log('💰 Payment successful for:', session.customer_email)
+    // In a real app, you'd store this in a database
+  }
+
+  res.json({ received: true })
+})
+
 app.use(express.json())
 
 // Serve static files from the Vite build
@@ -20,6 +53,44 @@ app.use(express.static(join(__dirname, 'dist')))
 // Health check for Railway
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: '🎚️ FLIP THE SWITCH is running' })
+})
+
+// Create Stripe checkout session
+app.post('/api/stripe/checkout', async (req, res) => {
+  if (!stripe || !STRIPE_PRICE_ID) {
+    return res.status(400).json({ error: 'Stripe not configured' })
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: STRIPE_PRICE_ID,
+          quantity: 1,
+        },
+      ],
+      mode: 'subscription', // or 'payment' for one-time
+      success_url: `${req.headers.origin || 'http://localhost:5173'}/?success=true`,
+      cancel_url: `${req.headers.origin || 'http://localhost:5173'}/?canceled=true`,
+    })
+
+    res.json({ url: session.url })
+  } catch (error) {
+    console.error('Stripe checkout error:', error)
+    res.status(500).json({ error: 'Failed to create checkout session' })
+  }
+})
+
+// Check subscription status (simple version - in production use a database)
+app.get('/api/stripe/status', async (req, res) => {
+  // For now, just return free tier info
+  // In production, you'd check the user's subscription in your database
+  res.json({ 
+    isPro: false, 
+    freeFlipsRemaining: 5,
+    price: '$2.99/month'
+  })
 })
 
 // Flip negative thoughts to positive
