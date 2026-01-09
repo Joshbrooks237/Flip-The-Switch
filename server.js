@@ -52,7 +52,7 @@ app.use(express.json())
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    message: '🎚️ FLIP THE SWITCH is running',
+    message: '🎚️ FLIP THE SCRIPT is running',
     hasOpenAIKey: !!OPENAI_API_KEY,
     hasElevenLabsKey: !!ELEVEN_LABS_API_KEY,
     hasStripeKey: !!STRIPE_SECRET_KEY
@@ -219,7 +219,7 @@ app.get('*', (req, res) => {
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
-  console.log(`🎚️  FLIP THE SWITCH server running on port ${PORT}`)
+  console.log(`🎚️  FLIP THE SCRIPT server running on port ${PORT}`)
   console.log(`   OpenAI key loaded: ${!!OPENAI_API_KEY}`)
   console.log(`   Eleven Labs key loaded: ${!!ELEVEN_LABS_API_KEY}`)
   console.log(`   Stripe key loaded: ${!!STRIPE_SECRET_KEY}`)
