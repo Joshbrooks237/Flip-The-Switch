@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import express from 'express'
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import Stripe from 'stripe'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 // Load environment variables
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 const ELEVEN_LABS_API_KEY = process.env.ELEVEN_LABS_API_KEY
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET
@@ -50,10 +50,10 @@ app.use(express.json())
 
 // Health check for Railway
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     message: '🎚️ FLIP THE SWITCH is running',
-    hasAnthropicKey: !!ANTHROPIC_API_KEY,
+    hasOpenAIKey: !!OPENAI_API_KEY,
     hasElevenLabsKey: !!ELEVEN_LABS_API_KEY,
     hasStripeKey: !!STRIPE_SECRET_KEY
   })
@@ -99,13 +99,13 @@ app.get('/api/stripe/status', async (req, res) => {
 app.post('/api/flip', async (req, res) => {
   const { thought, apiKey, language, darkHumor } = req.body
 
-  const key = apiKey || ANTHROPIC_API_KEY
+  const key = apiKey || OPENAI_API_KEY
   if (!thought || !key) {
     console.error('Missing thought or API key. Has key:', !!key)
     return res.status(400).json({ error: 'Missing thought or API key' })
   }
 
-  const langInstruction = language === 'es' 
+  const langInstruction = language === 'es'
     ? '\n\nIMPORTANT: Respond ONLY in Spanish (Español). Use warm, natural Spanish.'
     : ''
 
@@ -115,17 +115,21 @@ app.post('/api/flip', async (req, res) => {
     2: '\n\nHUMOR STYLE: Use dark humor. Be sardonic and dry. Think "well, at least you\'re not dead yet" energy. Still ultimately supportive but with an edge.',
     3: '\n\nHUMOR STYLE: Full gallows humor. Morbid, absurdist, dark comedy. Laugh at the void. Still end on a weirdly supportive note but get there through existential darkness.'
   }
-  
+
   const humorInstruction = humorStyles[darkHumor] || ''
 
   try {
-    console.log('Calling Anthropic API...')
-    const anthropic = new Anthropic({ apiKey: key })
+    console.log('Calling OpenAI API...')
+    const openai = new OpenAI({ apiKey: key })
 
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
       max_tokens: 500,
-      system: `You are a compassionate, warm friend helping someone who's having a hard moment. Your job is to take their negative thoughts and FLIP THE SCRIPT positive.${humorInstruction}${langInstruction}
+      temperature: 0.7,
+      messages: [
+        {
+          role: 'system',
+          content: `You are a compassionate, warm friend helping someone who's having a hard moment. Your job is to take their negative thoughts and FLIP THE SCRIPT positive.${humorInstruction}${langInstruction}
 
 People will come to you in different ways:
 - They might be hard on themselves: "I'm such a failure"
@@ -142,8 +146,8 @@ GUIDELINES:
 - Be concise: 2-4 sentences max.
 - Use "you" not "I" - you're talking TO them.
 
-You're a friend who reminds them of the truth when their brain is lying to them.`,
-      messages: [
+You're a friend who reminds them of the truth when their brain is lying to them.`
+        },
         {
           role: 'user',
           content: thought
@@ -151,11 +155,11 @@ You're a friend who reminds them of the truth when their brain is lying to them.
       ]
     })
 
-    console.log('Anthropic response received')
-    const flipped = message.content[0].text
+    console.log('OpenAI response received')
+    const flipped = completion.choices[0].message.content
     res.json({ flipped })
   } catch (error) {
-    console.error('Anthropic error:', error.message || error)
+    console.error('OpenAI error:', error.message || error)
     res.status(500).json({ error: 'Failed to process thought', details: error.message })
   }
 })
@@ -216,7 +220,7 @@ app.get('*', (req, res) => {
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`🎚️  FLIP THE SWITCH server running on port ${PORT}`)
-  console.log(`   Anthropic key loaded: ${!!ANTHROPIC_API_KEY}`)
+  console.log(`   OpenAI key loaded: ${!!OPENAI_API_KEY}`)
   console.log(`   Eleven Labs key loaded: ${!!ELEVEN_LABS_API_KEY}`)
   console.log(`   Stripe key loaded: ${!!STRIPE_SECRET_KEY}`)
 })
