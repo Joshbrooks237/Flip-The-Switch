@@ -484,7 +484,7 @@ function App() {
             </ul>
 
             <button className="btn btn-primary btn-large" onClick={handleUpgrade}>
-              Flip the Switch to Pro
+              Flip The Script to Pro
             </button>
             
             <button className="btn-text" onClick={() => setShowPaywall(false)}>

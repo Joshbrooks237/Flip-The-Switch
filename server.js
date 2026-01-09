@@ -75,8 +75,8 @@ app.post('/api/stripe/checkout', async (req, res) => {
         },
       ],
       mode: 'subscription',
-      success_url: `${req.headers.origin || 'https://flip-the-switch-production.up.railway.app'}/?success=true`,
-      cancel_url: `${req.headers.origin || 'https://flip-the-switch-production.up.railway.app'}/?canceled=true`,
+      success_url: `${req.headers.origin || 'https://flipthescript.app'}/?success=true`,
+      cancel_url: `${req.headers.origin || 'https://flipthescript.app'}/?canceled=true`,
     })
 
     res.json({ url: session.url })
