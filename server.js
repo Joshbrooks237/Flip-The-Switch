@@ -17,6 +17,11 @@ app.use(express.json())
 // Serve static files from the Vite build
 app.use(express.static(join(__dirname, 'dist')))
 
+// Health check for Railway
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', message: '🎚️ FLIP THE SWITCH is running' })
+})
+
 // Flip negative thoughts to positive
 app.post('/api/flip', async (req, res) => {
   const { thought, apiKey, language, darkHumor } = req.body
