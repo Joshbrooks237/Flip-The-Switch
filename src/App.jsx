@@ -22,7 +22,7 @@ function App() {
     }
     return 0
   })
-  const FREE_FLIPS = 5
+  const FREE_FLIPS = 3
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('flipSettings')
     return saved ? JSON.parse(saved) : { anthropicKey: '', elevenLabsKey: '', voiceId: 'EXAVITQu4vr4xnSDxMaL', language: 'en', darkHumor: 0 }
