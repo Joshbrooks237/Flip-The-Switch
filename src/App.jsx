@@ -83,8 +83,11 @@ function App() {
     // Secret admin code: ?rriobrave=1
     if (params.get('rriobrave') === '1') {
       setIsPro(true)
+      setFlipsToday(0)
       localStorage.setItem('flipPro', 'true')
+      localStorage.removeItem('flipCount')
       window.history.replaceState({}, '', '/') // Clean URL
+      alert('🎚️ PRO MODE ACTIVATED - You are now Pro!')
     }
   }, [])
 
@@ -133,9 +136,13 @@ function App() {
         })
       })
 
-      if (!res.ok) throw new Error('Failed to flip thought')
-      
       const data = await res.json()
+      
+      if (!res.ok) {
+        console.error('API Error:', data)
+        throw new Error(data.details || data.error || 'Failed to flip thought')
+      }
+      
       setResponse(data.flipped)
     } catch (error) {
       console.error('Error:', error)
@@ -439,7 +446,7 @@ function App() {
                   <option key={voice.id} value={voice.id}>{voice.name} - {voice.desc}</option>
                 ))}
               </select>
-            </div>
+      </div>
 
             <div className="modal-actions">
               <button className="btn btn-secondary" onClick={() => setShowSettings(false)}>
@@ -486,7 +493,7 @@ function App() {
           </div>
         </div>
       )}
-    </div>
+      </div>
   )
 }
 
