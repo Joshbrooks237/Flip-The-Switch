@@ -11,7 +11,7 @@ app.use(express.json())
 
 // Flip negative thoughts to positive
 app.post('/api/flip', async (req, res) => {
-  const { thought, apiKey, language } = req.body
+  const { thought, apiKey, language, darkHumor } = req.body
 
   const key = apiKey || ANTHROPIC_API_KEY
   if (!thought || !key) {
@@ -22,13 +22,22 @@ app.post('/api/flip', async (req, res) => {
     ? '\n\nIMPORTANT: Respond ONLY in Spanish (Español). Use warm, natural Spanish.'
     : ''
 
+  const humorStyles = {
+    0: '', // Gentle - default warm and sincere
+    1: '\n\nHUMOR STYLE: Be a bit witty and playful. Light sarcasm is okay. Still supportive but with a wink.',
+    2: '\n\nHUMOR STYLE: Use dark humor. Be sardonic and dry. Think "well, at least you\'re not dead yet" energy. Still ultimately supportive but with an edge. Acknowledge the absurdity of existence.',
+    3: '\n\nHUMOR STYLE: Full gallows humor. Morbid, absurdist, dark comedy. Think "we\'re all gonna die anyway so your problems are cosmically meaningless, which is actually liberating." Laugh at the void. Still end on a weirdly supportive note but get there through existential darkness and dark jokes.'
+  }
+  
+  const humorInstruction = humorStyles[darkHumor] || ''
+
   try {
     const anthropic = new Anthropic({ apiKey: key })
 
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 500,
-      system: `You are a compassionate, warm friend helping someone who's having a hard moment. Your job is to take their negative thoughts and FLIP THE SCRIPT positive.${langInstruction}
+      system: `You are a compassionate, warm friend helping someone who's having a hard moment. Your job is to take their negative thoughts and FLIP THE SCRIPT positive.${humorInstruction}${langInstruction}
 
 People will come to you in different ways:
 - They might be hard on themselves: "I'm such a failure"

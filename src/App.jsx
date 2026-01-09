@@ -10,7 +10,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('flipSettings')
-    return saved ? JSON.parse(saved) : { anthropicKey: '', elevenLabsKey: '', voiceId: 'EXAVITQu4vr4xnSDxMaL', language: 'en' }
+    return saved ? JSON.parse(saved) : { anthropicKey: '', elevenLabsKey: '', voiceId: 'EXAVITQu4vr4xnSDxMaL', language: 'en', darkHumor: 0 }
   })
 
   const voices = [
@@ -63,7 +63,8 @@ function App() {
         body: JSON.stringify({ 
           thought: thought.trim(),
           apiKey: settings.anthropicKey || '',
-          language: settings.language || 'en'
+          language: settings.language || 'en',
+          darkHumor: settings.darkHumor || 0
         })
       })
 
@@ -308,6 +309,27 @@ function App() {
             </div>
 
 <div className="form-group">
+              <label htmlFor="darkHumor">
+                Humor Style: {settings.darkHumor === 0 ? '🌸 Gentle' : settings.darkHumor === 1 ? '😏 Witty' : settings.darkHumor === 2 ? '🖤 Dark' : '💀 Gallows'}
+              </label>
+              <input
+                id="darkHumor"
+                type="range"
+                min="0"
+                max="3"
+                value={settings.darkHumor || 0}
+                onChange={(e) => setSettings(s => ({ ...s, darkHumor: parseInt(e.target.value) }))}
+                className="humor-slider"
+              />
+              <div className="humor-labels">
+                <span>Gentle</span>
+                <span>Witty</span>
+                <span>Dark</span>
+                <span>Gallows</span>
+              </div>
+            </div>
+
+            <div className="form-group">
               <label htmlFor="language">Response Language</label>
               <select
                 id="language"
