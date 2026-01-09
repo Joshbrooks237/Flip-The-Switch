@@ -72,10 +72,16 @@ function App() {
     localStorage.setItem('flipSettings', JSON.stringify(settings))
   }, [settings])
 
-  // Check for successful payment return
+  // Check for successful payment return or admin code
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('success') === 'true') {
+      setIsPro(true)
+      localStorage.setItem('flipPro', 'true')
+      window.history.replaceState({}, '', '/') // Clean URL
+    }
+    // Secret admin code: ?rriobrave=1
+    if (params.get('rriobrave') === '1') {
       setIsPro(true)
       localStorage.setItem('flipPro', 'true')
       window.history.replaceState({}, '', '/') // Clean URL
