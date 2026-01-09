@@ -123,7 +123,7 @@ app.post('/api/flip', async (req, res) => {
     const anthropic = new Anthropic({ apiKey: key })
 
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 500,
       system: `You are a compassionate, warm friend helping someone who's having a hard moment. Your job is to take their negative thoughts and FLIP THE SCRIPT positive.${humorInstruction}${langInstruction}
 
