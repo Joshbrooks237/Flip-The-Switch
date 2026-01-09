@@ -14,18 +14,28 @@ function App() {
   })
 
   const voices = [
+    // American English
     { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', desc: 'Female, American 🇺🇸' },
     { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', desc: 'Female, American 🇺🇸' },
-    { id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda', desc: 'Female, British 🇬🇧' },
-    { id: 'ThT5KcBeYPX3keUQqHPh', name: 'Dorothy', desc: 'Female, British 🇬🇧' },
     { id: 'jsCqWAovK2LkecY7zXl4', name: 'Freya', desc: 'Female, American (young) 🇺🇸' },
     { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni', desc: 'Male, American 🇺🇸' },
     { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh', desc: 'Male, American 🇺🇸' },
     { id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold', desc: 'Male, American (deep) 🇺🇸' },
     { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', desc: 'Male, American 🇺🇸' },
+    // British English
+    { id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda', desc: 'Female, British 🇬🇧' },
+    { id: 'ThT5KcBeYPX3keUQqHPh', name: 'Dorothy', desc: 'Female, British 🇬🇧' },
     { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', desc: 'Male, British 🇬🇧' },
-    { id: 'g5CIjZEefAph4nQFvHAz', name: 'Valentino', desc: 'Male, Spanish 🇪🇸' },
-    { id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice', desc: 'Female, Spanish 🇪🇸' },
+    // Spanish - Spain
+    { id: 'g5CIjZEefAph4nQFvHAz', name: 'Valentino', desc: 'Male, España 🇪🇸' },
+    { id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice', desc: 'Female, España 🇪🇸' },
+    // Spanish - Latin America
+    { id: 'pqHfZKP75CvOlQylNhV4', name: 'Diego', desc: 'Male, México 🇲🇽' },
+    { id: 'XB0fDUnXU5powFXDhCwa', name: 'Sofía', desc: 'Female, México 🇲🇽' },
+    { id: 'bVMeCyTHy58xNoL34h3p', name: 'Carlos', desc: 'Male, Argentina 🇦🇷' },
+    { id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura', desc: 'Female, Colombia 🇨🇴' },
+    { id: 'TX3LPaxmHKxFdv7VOQHJ', name: 'Elena', desc: 'Female, Latina 🌎' },
+    { id: 'iP95p4xoKVk53GoZ742B', name: 'Mateo', desc: 'Male, Latino 🌎' },
   ]
 
   const languages = [
