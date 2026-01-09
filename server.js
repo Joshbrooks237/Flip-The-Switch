@@ -19,7 +19,7 @@ const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null
 
 const app = express()
 
-// Stripe webhook needs raw body
+// Stripe webhook needs raw body - MUST be before express.json()
 app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   if (!stripe || !STRIPE_WEBHOOK_SECRET) {
     return res.status(400).json({ error: 'Stripe not configured' })
@@ -35,20 +35,18 @@ app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async
     return res.status(400).send(`Webhook Error: ${err.message}`)
   }
 
-  // Handle the event
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object
     console.log('💰 Payment successful for:', session.customer_email)
-    // In a real app, you'd store this in a database
   }
 
   res.json({ received: true })
 })
 
+// Parse JSON for all other routes
 app.use(express.json())
 
-// Serve static files from the Vite build
-app.use(express.static(join(__dirname, 'dist')))
+// ============ API ROUTES FIRST ============
 
 // Health check for Railway
 app.get('/api/health', (req, res) => {
@@ -76,9 +74,9 @@ app.post('/api/stripe/checkout', async (req, res) => {
           quantity: 1,
         },
       ],
-      mode: 'subscription', // or 'payment' for one-time
-      success_url: `${req.headers.origin || 'http://localhost:5173'}/?success=true`,
-      cancel_url: `${req.headers.origin || 'http://localhost:5173'}/?canceled=true`,
+      mode: 'subscription',
+      success_url: `${req.headers.origin || 'https://flip-the-switch-production.up.railway.app'}/?success=true`,
+      cancel_url: `${req.headers.origin || 'https://flip-the-switch-production.up.railway.app'}/?canceled=true`,
     })
 
     res.json({ url: session.url })
@@ -88,13 +86,11 @@ app.post('/api/stripe/checkout', async (req, res) => {
   }
 })
 
-// Check subscription status (simple version - in production use a database)
+// Check subscription status
 app.get('/api/stripe/status', async (req, res) => {
-  // For now, just return free tier info
-  // In production, you'd check the user's subscription in your database
   res.json({ 
     isPro: false, 
-    freeFlipsRemaining: 5,
+    freeFlipsRemaining: 3,
     price: '$2.99/month'
   })
 })
@@ -105,6 +101,7 @@ app.post('/api/flip', async (req, res) => {
 
   const key = apiKey || ANTHROPIC_API_KEY
   if (!thought || !key) {
+    console.error('Missing thought or API key. Has key:', !!key)
     return res.status(400).json({ error: 'Missing thought or API key' })
   }
 
@@ -113,15 +110,16 @@ app.post('/api/flip', async (req, res) => {
     : ''
 
   const humorStyles = {
-    0: '', // Gentle - default warm and sincere
+    0: '',
     1: '\n\nHUMOR STYLE: Be a bit witty and playful. Light sarcasm is okay. Still supportive but with a wink.',
-    2: '\n\nHUMOR STYLE: Use dark humor. Be sardonic and dry. Think "well, at least you\'re not dead yet" energy. Still ultimately supportive but with an edge. Acknowledge the absurdity of existence.',
-    3: '\n\nHUMOR STYLE: Full gallows humor. Morbid, absurdist, dark comedy. Think "we\'re all gonna die anyway so your problems are cosmically meaningless, which is actually liberating." Laugh at the void. Still end on a weirdly supportive note but get there through existential darkness and dark jokes.'
+    2: '\n\nHUMOR STYLE: Use dark humor. Be sardonic and dry. Think "well, at least you\'re not dead yet" energy. Still ultimately supportive but with an edge.',
+    3: '\n\nHUMOR STYLE: Full gallows humor. Morbid, absurdist, dark comedy. Laugh at the void. Still end on a weirdly supportive note but get there through existential darkness.'
   }
   
   const humorInstruction = humorStyles[darkHumor] || ''
 
   try {
+    console.log('Calling Anthropic API...')
     const anthropic = new Anthropic({ apiKey: key })
 
     const message = await anthropic.messages.create({
@@ -133,22 +131,18 @@ People will come to you in different ways:
 - They might be hard on themselves: "I'm such a failure"
 - They might report what others said: "My boss called me useless"
 - They might vent AT you: "You're stupid" or "This is dumb"
-- They might just YELL the exact words someone screamed at them: "YOU'RE WORTHLESS" or "NOBODY LOVES YOU"
+- They might just YELL the exact words someone screamed at them: "YOU'RE WORTHLESS"
 
-ALL of these get flipped with warmth. No context needed. If someone types raw angry words, assume those words were thrown at them and they need to hear the opposite. Meet everything with compassion.
+ALL of these get flipped with warmth. No context needed. Meet everything with compassion.
 
-IMPORTANT GUIDELINES:
-- Never dismiss their feelings. Validate first, then offer perspective.
-- Avoid toxic positivity ("just think positive!"). Be real and genuine.
-- Identify cognitive distortions (catastrophizing, black-and-white thinking, personalization) and gently challenge them.
-- Keep it conversational and warm, like a good friend would talk.
-- Be concise but meaningful. 2-4 sentences max.
-- If someone reports what others called them, remind them that other people's words don't define their worth.
-- If someone is rude to you, don't take it personally—just reflect back kindness.
+GUIDELINES:
+- Validate first, then offer perspective.
+- Avoid toxic positivity. Be real and genuine.
+- Keep it conversational, like a good friend.
+- Be concise: 2-4 sentences max.
 - Use "you" not "I" - you're talking TO them.
-- If they're expressing something really dark, acknowledge it seriously and remind them they matter.
 
-You're not a therapist giving clinical advice. You're a friend who sees them clearly and reminds them of the truth when their brain (or someone else) is lying to them.`,
+You're a friend who reminds them of the truth when their brain is lying to them.`,
       messages: [
         {
           role: 'user',
@@ -157,6 +151,7 @@ You're not a therapist giving clinical advice. You're a friend who sees them cle
       ]
     })
 
+    console.log('Anthropic response received')
     const flipped = message.content[0].text
     res.json({ flipped })
   } catch (error) {
@@ -208,7 +203,12 @@ app.post('/api/speak', async (req, res) => {
   }
 })
 
-// SPA fallback - serve index.html for all other routes
+// ============ STATIC FILES AFTER API ROUTES ============
+
+// Serve static files from the Vite build
+app.use(express.static(join(__dirname, 'dist')))
+
+// SPA fallback - serve index.html for all other routes (MUST BE LAST)
 app.get('*', (req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'))
 })
@@ -216,4 +216,7 @@ app.get('*', (req, res) => {
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`🎚️  FLIP THE SWITCH server running on port ${PORT}`)
+  console.log(`   Anthropic key loaded: ${!!ANTHROPIC_API_KEY}`)
+  console.log(`   Eleven Labs key loaded: ${!!ELEVEN_LABS_API_KEY}`)
+  console.log(`   Stripe key loaded: ${!!STRIPE_SECRET_KEY}`)
 })
