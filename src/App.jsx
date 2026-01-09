@@ -119,45 +119,59 @@ function App() {
   }
 
   const startRecording = async () => {
+    // If already recording, stop it
+    if (isRecording && mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+      return
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mediaRecorder = new MediaRecorder(stream)
-      const chunks = []
-
-      mediaRecorder.ondataavailable = (e) => chunks.push(e.data)
-      mediaRecorder.onstop = async () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' })
-        stream.getTracks().forEach(track => track.stop())
-        
-        // Use Web Speech API for transcription (free!)
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-          // Already handled by speech recognition below
-        }
-      }
-
-      mediaRecorderRef.current = mediaRecorder
-      
-      // Use Speech Recognition API instead
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition()
-        recognition.continuous = false
-        recognition.interimResults = false
+        recognition.continuous = true // Keep listening
+        recognition.interimResults = true // Show progress
+        recognition.maxAlternatives = 1
+        
+        let finalTranscript = ''
+        let silenceTimer = null
         
         recognition.onresult = (event) => {
-          const transcript = event.results[0][0].transcript
-          setThought(transcript)
-          setIsRecording(false)
+          let interimTranscript = ''
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            if (event.results[i].isFinal) {
+              finalTranscript += event.results[i][0].transcript + ' '
+            } else {
+              interimTranscript += event.results[i][0].transcript
+            }
+          }
+          
+          // Show what they're saying in real-time
+          setThought(finalTranscript + interimTranscript)
+          
+          // Reset silence timer - give them 3 seconds of silence before stopping
+          if (silenceTimer) clearTimeout(silenceTimer)
+          silenceTimer = setTimeout(() => {
+            recognition.stop()
+          }, 3000) // 3 seconds of silence before auto-stop
         }
         
-        recognition.onerror = () => {
+        recognition.onerror = (e) => {
+          console.error('Speech error:', e)
+          if (silenceTimer) clearTimeout(silenceTimer)
           setIsRecording(false)
         }
         
         recognition.onend = () => {
+          if (silenceTimer) clearTimeout(silenceTimer)
           setIsRecording(false)
+          // Clean up the transcript
+          setThought(prev => prev.trim())
         }
         
+        mediaRecorderRef.current = recognition // Store reference to stop later
         recognition.start()
         setIsRecording(true)
       }
@@ -201,7 +215,7 @@ function App() {
             <button 
               className={`btn btn-secondary ${isRecording ? 'btn-recording' : ''}`}
               onClick={startRecording}
-              disabled={isRecording || isLoading}
+              disabled={isLoading}
             >
               <svg className="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
@@ -209,7 +223,7 @@ function App() {
                 <line x1="12" y1="19" x2="12" y2="23"/>
                 <line x1="8" y1="23" x2="16" y2="23"/>
               </svg>
-              {isRecording ? 'Listening...' : 'Speak'}
+              {isRecording ? 'Tap to Stop' : 'Speak'}
             </button>
             <button 
               className="btn btn-primary"
