@@ -14,6 +14,13 @@ function App() {
   })
 
   const voices = [
+    // Strong Black Male Voices
+    { id: 'ODq5zmih8GrVes37Dizd', name: 'Marcus', desc: 'Male, Black American (deep) 💪🏿' },
+    { id: 'N2lVS1w4EtoT3dr4eOWO', name: 'Callum', desc: 'Male, Black American (warm) 💪🏿' },
+    { id: 'CYw3kZ02Hs0563khs1Fj', name: 'Dave', desc: 'Male, Black American (strong) 💪🏿' },
+    { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', desc: 'Male, Black British (deep) 💪🏿' },
+    { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie', desc: 'Male, Black American (calm) 💪🏿' },
+    { id: 'ZQe5CZNOzWyzPSCn5a3c', name: 'James', desc: 'Male, Black American (authoritative) 💪🏿' },
     // American English
     { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', desc: 'Female, American 🇺🇸' },
     { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', desc: 'Female, American 🇺🇸' },
