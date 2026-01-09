@@ -52,7 +52,13 @@ app.use(express.static(join(__dirname, 'dist')))
 
 // Health check for Railway
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: '🎚️ FLIP THE SWITCH is running' })
+  res.json({ 
+    status: 'ok', 
+    message: '🎚️ FLIP THE SWITCH is running',
+    hasAnthropicKey: !!ANTHROPIC_API_KEY,
+    hasElevenLabsKey: !!ELEVEN_LABS_API_KEY,
+    hasStripeKey: !!STRIPE_SECRET_KEY
+  })
 })
 
 // Create Stripe checkout session
@@ -119,7 +125,7 @@ app.post('/api/flip', async (req, res) => {
     const anthropic = new Anthropic({ apiKey: key })
 
     const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-3-5-sonnet-20241022',
       max_tokens: 500,
       system: `You are a compassionate, warm friend helping someone who's having a hard moment. Your job is to take their negative thoughts and FLIP THE SCRIPT positive.${humorInstruction}${langInstruction}
 
@@ -154,8 +160,8 @@ You're not a therapist giving clinical advice. You're a friend who sees them cle
     const flipped = message.content[0].text
     res.json({ flipped })
   } catch (error) {
-    console.error('Anthropic error:', error)
-    res.status(500).json({ error: 'Failed to process thought' })
+    console.error('Anthropic error:', error.message || error)
+    res.status(500).json({ error: 'Failed to process thought', details: error.message })
   }
 })
 
