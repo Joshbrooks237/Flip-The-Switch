@@ -10,8 +10,28 @@ function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('flipSettings')
-    return saved ? JSON.parse(saved) : { anthropicKey: '', elevenLabsKey: '', voiceId: '' }
+    return saved ? JSON.parse(saved) : { anthropicKey: '', elevenLabsKey: '', voiceId: 'EXAVITQu4vr4xnSDxMaL', language: 'en' }
   })
+
+  const voices = [
+    { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', desc: 'Female, American 🇺🇸' },
+    { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', desc: 'Female, American 🇺🇸' },
+    { id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda', desc: 'Female, British 🇬🇧' },
+    { id: 'ThT5KcBeYPX3keUQqHPh', name: 'Dorothy', desc: 'Female, British 🇬🇧' },
+    { id: 'jsCqWAovK2LkecY7zXl4', name: 'Freya', desc: 'Female, American (young) 🇺🇸' },
+    { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni', desc: 'Male, American 🇺🇸' },
+    { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh', desc: 'Male, American 🇺🇸' },
+    { id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold', desc: 'Male, American (deep) 🇺🇸' },
+    { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', desc: 'Male, American 🇺🇸' },
+    { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', desc: 'Male, British 🇬🇧' },
+    { id: 'g5CIjZEefAph4nQFvHAz', name: 'Valentino', desc: 'Male, Spanish 🇪🇸' },
+    { id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice', desc: 'Female, Spanish 🇪🇸' },
+  ]
+
+  const languages = [
+    { code: 'en', name: 'English 🇺🇸' },
+    { code: 'es', name: 'Español 🇪🇸' },
+  ]
   
   const audioRef = useRef(null)
   const mediaRecorderRef = useRef(null)
@@ -32,7 +52,8 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           thought: thought.trim(),
-          apiKey: settings.anthropicKey || ''
+          apiKey: settings.anthropicKey || '',
+          language: settings.language || 'en'
         })
       })
 
@@ -276,16 +297,31 @@ function App() {
               />
             </div>
 
+<div className="form-group">
+              <label htmlFor="language">Response Language</label>
+              <select
+                id="language"
+                value={settings.language || 'en'}
+                onChange={(e) => setSettings(s => ({ ...s, language: e.target.value }))}
+              >
+                {languages.map(lang => (
+                  <option key={lang.code} value={lang.code}>{lang.name}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="form-group">
-              <label htmlFor="voiceId">Voice ID (optional)</label>
-              <input
+              <label htmlFor="voiceId">Voice</label>
+              <select
                 id="voiceId"
-                type="text"
-                placeholder="Default: Sarah (EXAVITQu4vr4xnSDxMaL)"
-                value={settings.voiceId}
+                value={settings.voiceId || 'EXAVITQu4vr4xnSDxMaL'}
                 onChange={(e) => setSettings(s => ({ ...s, voiceId: e.target.value }))}
-              />
-      </div>
+              >
+                {voices.map(voice => (
+                  <option key={voice.id} value={voice.id}>{voice.name} - {voice.desc}</option>
+                ))}
+              </select>
+            </div>
 
             <div className="modal-actions">
               <button className="btn btn-secondary" onClick={() => setShowSettings(false)}>

@@ -11,12 +11,16 @@ app.use(express.json())
 
 // Flip negative thoughts to positive
 app.post('/api/flip', async (req, res) => {
-  const { thought, apiKey } = req.body
+  const { thought, apiKey, language } = req.body
 
   const key = apiKey || ANTHROPIC_API_KEY
   if (!thought || !key) {
     return res.status(400).json({ error: 'Missing thought or API key' })
   }
+
+  const langInstruction = language === 'es' 
+    ? '\n\nIMPORTANT: Respond ONLY in Spanish (Español). Use warm, natural Spanish.'
+    : ''
 
   try {
     const anthropic = new Anthropic({ apiKey: key })
@@ -24,7 +28,7 @@ app.post('/api/flip', async (req, res) => {
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 500,
-      system: `You are a compassionate, warm friend helping someone who's having a hard moment. Your job is to take their negative thoughts and FLIP THE SCRIPT positive.
+      system: `You are a compassionate, warm friend helping someone who's having a hard moment. Your job is to take their negative thoughts and FLIP THE SCRIPT positive.${langInstruction}
 
 People will come to you in different ways:
 - They might be hard on themselves: "I'm such a failure"
@@ -81,7 +85,7 @@ app.post('/api/speak', async (req, res) => {
       },
       body: JSON.stringify({
         text,
-        model_id: 'eleven_monolingual_v1',
+        model_id: 'eleven_multilingual_v2',
         voice_settings: {
           stability: 0.6,
           similarity_boost: 0.75
