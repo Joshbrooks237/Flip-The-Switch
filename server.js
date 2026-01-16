@@ -1,6 +1,11 @@
 import 'dotenv/config'
 import express from 'express'
 import Anthropic from '@anthropic-ai/sdk'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 // Load environment variables
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
@@ -103,6 +108,16 @@ app.post('/api/speak', async (req, res) => {
     console.error('Eleven Labs error:', error)
     res.status(500).json({ error: 'Failed to generate speech' })
   }
+})
+
+// ============ STATIC FILES AFTER API ROUTES ============
+
+// Serve static files from the Vite build
+app.use(express.static(join(__dirname, 'dist')))
+
+// SPA fallback - serve index.html for all other routes (MUST BE LAST)
+app.get('*', (req, res) => {
+  res.sendFile(join(__dirname, 'dist', 'index.html'))
 })
 
 const PORT = process.env.PORT || 3001
