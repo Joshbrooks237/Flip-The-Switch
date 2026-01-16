@@ -8,62 +8,10 @@ function App() {
   const [isRecording, setIsRecording] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [showPaywall, setShowPaywall] = useState(false)
-  const [isPro, setIsPro] = useState(() => localStorage.getItem('flipPro') === 'true')
-  const [flipsToday, setFlipsToday] = useState(() => {
-    const saved = localStorage.getItem('flipCount')
-    if (saved) {
-      const { count, date } = JSON.parse(saved)
-      // Reset if it's a new day
-      if (date !== new Date().toDateString()) {
-        return 0
-      }
-      return count
-    }
-    return 0
-  })
-  const FREE_FLIPS = 3
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('flipSettings')
-    return saved ? JSON.parse(saved) : { anthropicKey: '', elevenLabsKey: '', voiceId: 'EXAVITQu4vr4xnSDxMaL', language: 'en', darkHumor: 0 }
+    return saved ? JSON.parse(saved) : { anthropicKey: '', elevenLabsKey: '', voiceId: '' }
   })
-
-  const voices = [
-    // Strong Black Male Voices
-    { id: 'ODq5zmih8GrVes37Dizd', name: 'Marcus', desc: 'Male, Black American (deep) 💪🏿' },
-    { id: 'N2lVS1w4EtoT3dr4eOWO', name: 'Callum', desc: 'Male, Black American (warm) 💪🏿' },
-    { id: 'CYw3kZ02Hs0563khs1Fj', name: 'Dave', desc: 'Male, Black American (strong) 💪🏿' },
-    { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', desc: 'Male, Black British (deep) 💪🏿' },
-    { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie', desc: 'Male, Black American (calm) 💪🏿' },
-    { id: 'ZQe5CZNOzWyzPSCn5a3c', name: 'James', desc: 'Male, Black American (authoritative) 💪🏿' },
-    // American English
-    { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', desc: 'Female, American 🇺🇸' },
-    { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', desc: 'Female, American 🇺🇸' },
-    { id: 'jsCqWAovK2LkecY7zXl4', name: 'Freya', desc: 'Female, American (young) 🇺🇸' },
-    { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni', desc: 'Male, American 🇺🇸' },
-    { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh', desc: 'Male, American 🇺🇸' },
-    { id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold', desc: 'Male, American (deep) 🇺🇸' },
-    { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', desc: 'Male, American 🇺🇸' },
-    // British English
-    { id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda', desc: 'Female, British 🇬🇧' },
-    { id: 'ThT5KcBeYPX3keUQqHPh', name: 'Dorothy', desc: 'Female, British 🇬🇧' },
-    { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', desc: 'Male, British 🇬🇧' },
-    // Spanish - Spain
-    { id: 'g5CIjZEefAph4nQFvHAz', name: 'Valentino', desc: 'Male, España 🇪🇸' },
-    { id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice', desc: 'Female, España 🇪🇸' },
-    // Spanish - Latin America
-    { id: 'pqHfZKP75CvOlQylNhV4', name: 'Diego', desc: 'Male, México 🇲🇽' },
-    { id: 'XB0fDUnXU5powFXDhCwa', name: 'Sofía', desc: 'Female, México 🇲🇽' },
-    { id: 'bVMeCyTHy58xNoL34h3p', name: 'Carlos', desc: 'Male, Argentina 🇦🇷' },
-    { id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura', desc: 'Female, Colombia 🇨🇴' },
-    { id: 'TX3LPaxmHKxFdv7VOQHJ', name: 'Elena', desc: 'Female, Latina 🌎' },
-    { id: 'iP95p4xoKVk53GoZ742B', name: 'Mateo', desc: 'Male, Latino 🌎' },
-  ]
-
-  const languages = [
-    { code: 'en', name: 'English 🇺🇸' },
-    { code: 'es', name: 'Español 🇪🇸' },
-  ]
   
   const audioRef = useRef(null)
   const mediaRecorderRef = useRef(null)
@@ -72,57 +20,11 @@ function App() {
     localStorage.setItem('flipSettings', JSON.stringify(settings))
   }, [settings])
 
-  // Check for successful payment return or admin code
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    if (params.get('success') === 'true') {
-      setIsPro(true)
-      localStorage.setItem('flipPro', 'true')
-      window.history.replaceState({}, '', '/') // Clean URL
-    }
-    // Secret admin code: ?rriobrave=1
-    if (params.get('rriobrave') === '1') {
-      setIsPro(true)
-      setFlipsToday(0)
-      localStorage.setItem('flipPro', 'true')
-      localStorage.removeItem('flipCount')
-      window.history.replaceState({}, '', '/') // Clean URL
-      alert('🎚️ PRO MODE ACTIVATED - You are now Pro!')
-    }
-  }, [])
-
-  // Save flip count
-  useEffect(() => {
-    localStorage.setItem('flipCount', JSON.stringify({
-      count: flipsToday,
-      date: new Date().toDateString()
-    }))
-  }, [flipsToday])
-
-  const handleUpgrade = async () => {
-    try {
-      const res = await fetch('/api/stripe/checkout', { method: 'POST' })
-      const data = await res.json()
-      if (data.url) {
-        window.location.href = data.url
-      }
-    } catch (error) {
-      console.error('Checkout error:', error)
-    }
-  }
-
   const flipThought = async () => {
     if (!thought.trim() || isLoading) return
 
-    // Check usage limit (unless Pro)
-    if (!isPro && flipsToday >= FREE_FLIPS) {
-      setShowPaywall(true)
-      return
-    }
-
     setIsLoading(true)
     setResponse('')
-    setFlipsToday(prev => prev + 1)
 
     try {
       const res = await fetch('/api/flip', {
@@ -130,19 +32,13 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           thought: thought.trim(),
-          apiKey: settings.anthropicKey || '',
-          language: settings.language || 'en',
-          darkHumor: settings.darkHumor || 0
+          apiKey: settings.anthropicKey || ''
         })
       })
 
+      if (!res.ok) throw new Error('Failed to flip thought')
+      
       const data = await res.json()
-      
-      if (!res.ok) {
-        console.error('API Error:', data)
-        throw new Error(data.details || data.error || 'Failed to flip thought')
-      }
-      
       setResponse(data.flipped)
     } catch (error) {
       console.error('Error:', error)
@@ -184,59 +80,45 @@ function App() {
   }
 
   const startRecording = async () => {
-    // If already recording, stop it
-    if (isRecording && mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop()
-      setIsRecording(false)
-      return
-    }
-
     try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      const chunks = []
+
+      mediaRecorder.ondataavailable = (e) => chunks.push(e.data)
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(chunks, { type: 'audio/webm' })
+        stream.getTracks().forEach(track => track.stop())
+        
+        // Use Web Speech API for transcription (free!)
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+          // Already handled by speech recognition below
+        }
+      }
+
+      mediaRecorderRef.current = mediaRecorder
+      
+      // Use Speech Recognition API instead
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
       if (SpeechRecognition) {
         const recognition = new SpeechRecognition()
-        recognition.continuous = true // Keep listening
-        recognition.interimResults = true // Show progress
-        recognition.maxAlternatives = 1
-        
-        let finalTranscript = ''
-        let silenceTimer = null
+        recognition.continuous = false
+        recognition.interimResults = false
         
         recognition.onresult = (event) => {
-          let interimTranscript = ''
-          
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            if (event.results[i].isFinal) {
-              finalTranscript += event.results[i][0].transcript + ' '
-            } else {
-              interimTranscript += event.results[i][0].transcript
-            }
-          }
-          
-          // Show what they're saying in real-time
-          setThought(finalTranscript + interimTranscript)
-          
-          // Reset silence timer - give them 3 seconds of silence before stopping
-          if (silenceTimer) clearTimeout(silenceTimer)
-          silenceTimer = setTimeout(() => {
-            recognition.stop()
-          }, 3000) // 3 seconds of silence before auto-stop
+          const transcript = event.results[0][0].transcript
+          setThought(transcript)
+          setIsRecording(false)
         }
         
-        recognition.onerror = (e) => {
-          console.error('Speech error:', e)
-          if (silenceTimer) clearTimeout(silenceTimer)
+        recognition.onerror = () => {
           setIsRecording(false)
         }
         
         recognition.onend = () => {
-          if (silenceTimer) clearTimeout(silenceTimer)
           setIsRecording(false)
-          // Clean up the transcript
-          setThought(prev => prev.trim())
         }
         
-        mediaRecorderRef.current = recognition // Store reference to stop later
         recognition.start()
         setIsRecording(true)
       }
@@ -258,16 +140,9 @@ function App() {
       <header className="header">
         <div className="logo">
           <img src="/switch.svg" alt="" className="logo-icon" />
-          <h1>FLIP THE SCRIPT</h1>
+          <h1>FLIP THE SWITCH</h1>
         </div>
         <p className="tagline">Transform your thoughts. You don't suck...that much.</p>
-        {!isPro && (
-          <p className="flip-counter">
-            {FREE_FLIPS - flipsToday} free flips left today
-            <button className="upgrade-link" onClick={() => setShowPaywall(true)}>Go Pro</button>
-          </p>
-        )}
-        {isPro && <p className="pro-badge">⭐ PRO</p>}
       </header>
 
       <main className="main">
@@ -287,7 +162,7 @@ function App() {
             <button 
               className={`btn btn-secondary ${isRecording ? 'btn-recording' : ''}`}
               onClick={startRecording}
-              disabled={isLoading}
+              disabled={isRecording || isLoading}
             >
               <svg className="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
@@ -295,7 +170,7 @@ function App() {
                 <line x1="12" y1="19" x2="12" y2="23"/>
                 <line x1="8" y1="23" x2="16" y2="23"/>
               </svg>
-              {isRecording ? 'Tap to Stop' : 'Speak'}
+              {isRecording ? 'Listening...' : 'Speak'}
             </button>
             <button 
               className="btn btn-primary"
@@ -315,7 +190,7 @@ function App() {
                     <polyline points="7 23 3 19 7 15"/>
                     <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
                   </svg>
-                  Flip The Script
+                  Flip It
                 </>
               )}
             </button>
@@ -401,51 +276,15 @@ function App() {
               />
             </div>
 
-<div className="form-group">
-              <label htmlFor="darkHumor">
-                Humor Style: {settings.darkHumor === 0 ? '🌸 Gentle' : settings.darkHumor === 1 ? '😏 Witty' : settings.darkHumor === 2 ? '🖤 Dark' : '💀 Gallows'}
-              </label>
+            <div className="form-group">
+              <label htmlFor="voiceId">Voice ID (optional)</label>
               <input
-                id="darkHumor"
-                type="range"
-                min="0"
-                max="3"
-                value={settings.darkHumor || 0}
-                onChange={(e) => setSettings(s => ({ ...s, darkHumor: parseInt(e.target.value) }))}
-                className="humor-slider"
-              />
-              <div className="humor-labels">
-                <span>Gentle</span>
-                <span>Witty</span>
-                <span>Dark</span>
-                <span>Gallows</span>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="language">Response Language</label>
-              <select
-                id="language"
-                value={settings.language || 'en'}
-                onChange={(e) => setSettings(s => ({ ...s, language: e.target.value }))}
-              >
-                {languages.map(lang => (
-                  <option key={lang.code} value={lang.code}>{lang.name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="voiceId">Voice</label>
-              <select
                 id="voiceId"
-                value={settings.voiceId || 'EXAVITQu4vr4xnSDxMaL'}
+                type="text"
+                placeholder="Default: Sarah (EXAVITQu4vr4xnSDxMaL)"
+                value={settings.voiceId}
                 onChange={(e) => setSettings(s => ({ ...s, voiceId: e.target.value }))}
-              >
-                {voices.map(voice => (
-                  <option key={voice.id} value={voice.id}>{voice.name} - {voice.desc}</option>
-                ))}
-              </select>
+              />
       </div>
 
             <div className="modal-actions">
@@ -457,42 +296,11 @@ function App() {
         </div>
       )}
 
-<audio 
+      <audio 
         ref={audioRef} 
         onEnded={() => setIsPlaying(false)}
         onError={() => setIsPlaying(false)}
       />
-
-      {showPaywall && (
-        <div className="modal-overlay" onClick={() => setShowPaywall(false)}>
-          <div className="modal paywall-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>You've used your free flips! 🎚️</h2>
-            <p className="paywall-message">
-              Look, mental health support shouldn't be expensive. That's why we keep it cheap.
-            </p>
-            
-            <div className="price-box">
-              <span className="price">$2.99</span>
-              <span className="price-period">/month</span>
-            </div>
-            
-            <ul className="pro-features">
-              <li>✓ Unlimited flips</li>
-              <li>✓ All voices & languages</li>
-              <li>✓ Dark humor slider</li>
-              <li>✓ Support someone with PTSD building cool shit</li>
-            </ul>
-
-            <button className="btn btn-primary btn-large" onClick={handleUpgrade}>
-              Flip The Script to Pro
-            </button>
-            
-            <button className="btn-text" onClick={() => setShowPaywall(false)}>
-              Maybe tomorrow
-            </button>
-          </div>
-        </div>
-      )}
       </div>
   )
 }

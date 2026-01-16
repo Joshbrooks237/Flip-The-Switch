@@ -7,7 +7,6 @@
     "dev": "concurrently \"npm run server\" \"vite\"",
     "server": "node server.js",
     "build": "vite build",
-    "start": "node server.js",
     "preview": "vite preview",
     "lint": "eslint ."
   },
@@ -16,10 +15,8 @@
     "concurrently": "^9.2.1",
     "dotenv": "^17.2.3",
     "express": "^4.22.1",
-    "openai": "^6.15.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "stripe": "^20.1.2",
     "vite-plugin-pwa": "^0.20.5",
     "workbox-window": "^7.4.0"
   },
