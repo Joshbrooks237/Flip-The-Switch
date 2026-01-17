@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import express from 'express'
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 
@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
 // Load environment variables
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 const ELEVEN_LABS_API_KEY = process.env.ELEVEN_LABS_API_KEY
 
 const app = express()
@@ -18,18 +18,23 @@ app.use(express.json())
 app.post('/api/flip', async (req, res) => {
   const { thought, apiKey } = req.body
 
-  const key = apiKey || ANTHROPIC_API_KEY
+  const key = apiKey || OPENAI_API_KEY
   if (!thought || !key) {
     return res.status(400).json({ error: 'Missing thought or API key' })
   }
 
   try {
-    const anthropic = new Anthropic({ apiKey: key })
+    console.log('Calling OpenAI API...')
+    const openai = new OpenAI({ apiKey: key })
 
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
       max_tokens: 500,
-      system: `You are a compassionate, warm friend helping someone who's having a hard moment. Your job is to take their negative thoughts and FLIP THE SCRIPT positive.
+      temperature: 0.7,
+      messages: [
+        {
+          role: 'system',
+          content: `You are a compassionate, warm friend helping someone who's having a hard moment. Your job is to take their negative thoughts and FLIP THE SCRIPT positive.
 
 People will come to you in different ways:
 - They might be hard on themselves: "I'm such a failure"
@@ -50,8 +55,8 @@ IMPORTANT GUIDELINES:
 - Use "you" not "I" - you're talking TO them.
 - If they're expressing something really dark, acknowledge it seriously and remind them they matter.
 
-You're not a therapist giving clinical advice. You're a friend who sees them clearly and reminds them of the truth when their brain (or someone else) is lying to them.`,
-      messages: [
+You're not a therapist giving clinical advice. You're a friend who sees them clearly and reminds them of the truth when their brain (or someone else) is lying to them.`
+        },
         {
           role: 'user',
           content: thought
@@ -59,11 +64,12 @@ You're not a therapist giving clinical advice. You're a friend who sees them cle
       ]
     })
 
-    const flipped = message.content[0].text
+    console.log('OpenAI response received')
+    const flipped = completion.choices[0].message.content
     res.json({ flipped })
   } catch (error) {
-    console.error('Anthropic error:', error)
-    res.status(500).json({ error: 'Failed to process thought' })
+    console.error('OpenAI error:', error.message || error)
+    res.status(500).json({ error: 'Failed to process thought', details: error.message })
   }
 })
 
@@ -123,4 +129,6 @@ app.get('*', (req, res) => {
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`🎚️  FLIP THE SWITCH server running on port ${PORT}`)
+  console.log(`   OpenAI key loaded: ${!!OPENAI_API_KEY}`)
+  console.log(`   Eleven Labs key loaded: ${!!ELEVEN_LABS_API_KEY}`)
 })
