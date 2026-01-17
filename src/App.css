@@ -60,6 +60,7 @@
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   min-height: 0; /* Important for flex child scrolling */
+  max-height: calc(100dvh - 80px); /* Account for header */
 }
 
 /* Input panel */
@@ -190,7 +191,8 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  min-height: 150px;
+  min-height: 120px;
+  max-height: 60vh; /* Prevent it from taking up too much space on small screens */
 }
 
 .response-header {
@@ -248,7 +250,8 @@
   -webkit-overflow-scrolling: touch;
   padding-right: 0.5rem;
   scroll-behavior: smooth;
-  min-height: 0; /* Required for flex child scrolling */
+  min-height: 40px; /* Ensure some minimum height */
+  max-height: calc(60vh - 120px); /* Account for header and voice button */
 }
 
 .response-empty {
@@ -286,6 +289,7 @@
   padding-top: 1rem;
   border-top: 1px solid var(--bg-elevated);
   flex-shrink: 0;
+  min-height: 60px; /* Ensure button is always visible */
 }
 
 .btn-voice {
@@ -534,6 +538,27 @@
     height: 44px;
     bottom: 1rem;
     right: 1rem;
+  }
+}
+
+/* iPhone Mini specific adjustments (375px width) */
+@media (max-width: 375px) {
+  .response-panel {
+    min-height: 120px;
+    max-height: 45vh;
+  }
+
+  .response-content {
+    max-height: calc(45vh - 140px);
+  }
+
+  .voice-output {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+  }
+
+  .tagline {
+    display: none; /* Hide tagline on very small screens */
   }
 }
 
