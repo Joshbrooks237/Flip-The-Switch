@@ -27,10 +27,7 @@ function App() {
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('flipSettings')
     return saved ? JSON.parse(saved) : {
-      openaiKey: '',
-      elevenLabsKey: '',
       voiceId: 'EXAVITQu4vr4xnSDxMaL', // Default: Sarah
-      language: 'en',
       accent: 'american'
     }
   })
@@ -135,8 +132,7 @@ function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          thought: thought.trim(),
-          apiKey: settings.openaiKey || ''
+          thought: thought.trim()
         })
       })
 
@@ -163,7 +159,6 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: response,
-          apiKey: settings.elevenLabsKey || '',
           voiceId: settings.voiceId || 'EXAVITQu4vr4xnSDxMaL' // Default: Sarah
         })
       })
@@ -365,27 +360,6 @@ function App() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2>Settings</h2>
             
-            <div className="form-group">
-              <label htmlFor="openaiKey">OpenAI API Key</label>
-              <input
-                id="openaiKey"
-                type="password"
-                placeholder="sk-..."
-                value={settings.openaiKey}
-                onChange={(e) => setSettings(s => ({ ...s, openaiKey: e.target.value }))}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="elevenLabsKey">Eleven Labs API Key</label>
-              <input
-                id="elevenLabsKey"
-                type="password"
-                placeholder="Your Eleven Labs key"
-                value={settings.elevenLabsKey}
-                onChange={(e) => setSettings(s => ({ ...s, elevenLabsKey: e.target.value }))}
-              />
-            </div>
 
             <div className="form-group">
               <label htmlFor="accent">Voice Accent</label>
