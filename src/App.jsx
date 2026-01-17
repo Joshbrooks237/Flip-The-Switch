@@ -81,7 +81,7 @@ function App() {
   ]
   
   const audioRef = useRef(null)
-  const mediaRecorderRef = useRef(null)
+  const recognitionRef = useRef(null)
 
   useEffect(() => {
     localStorage.setItem('flipSettings', JSON.stringify(settings))
@@ -179,51 +179,66 @@ function App() {
   }
 
   const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mediaRecorder = new MediaRecorder(stream)
-      const chunks = []
-
-      mediaRecorder.ondataavailable = (e) => chunks.push(e.data)
-      mediaRecorder.onstop = async () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' })
-        stream.getTracks().forEach(track => track.stop())
-        
-        // Use Web Speech API for transcription (free!)
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-          // Already handled by speech recognition below
-        }
-      }
-
-      mediaRecorderRef.current = mediaRecorder
-      
-      // Use Speech Recognition API instead
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-      if (SpeechRecognition) {
-        const recognition = new SpeechRecognition()
-        recognition.continuous = false
-        recognition.interimResults = false
-        
-        recognition.onresult = (event) => {
-          const transcript = event.results[0][0].transcript
-          setThought(transcript)
-          setIsRecording(false)
-        }
-        
-        recognition.onerror = () => {
-          setIsRecording(false)
-        }
-        
-        recognition.onend = () => {
-          setIsRecording(false)
-        }
-        
-        recognition.start()
-        setIsRecording(true)
-      }
-    } catch (error) {
-      console.error('Error accessing microphone:', error)
+    // If already recording, stop it
+    if (isRecording && recognitionRef.current) {
+      recognitionRef.current.stop()
       setIsRecording(false)
+      return
+    }
+
+    try {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+      if (!SpeechRecognition) {
+        alert('Speech recognition is not supported in this browser. Please use a modern browser like Chrome, Safari, or Edge.')
+        return
+      }
+
+      const recognition = new SpeechRecognition()
+      recognition.continuous = false
+      recognition.interimResults = false
+      recognition.lang = 'en-US' // Default language
+
+      recognition.onstart = () => {
+        setIsRecording(true)
+        // Provide haptic feedback if available (iOS)
+        if (navigator.vibrate) {
+          navigator.vibrate(50)
+        }
+      }
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript
+        if (transcript && transcript.trim()) {
+          setThought(transcript.trim())
+        }
+        setIsRecording(false)
+      }
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error)
+        setIsRecording(false)
+
+        // Show user-friendly error messages
+        if (event.error === 'not-allowed') {
+          alert('Microphone access denied. Please allow microphone access and try again.')
+        } else if (event.error === 'no-speech') {
+          alert('No speech detected. Please speak clearly and try again.')
+        } else if (event.error === 'network') {
+          alert('Network error. Please check your connection and try again.')
+        }
+      }
+
+      recognition.onend = () => {
+        setIsRecording(false)
+      }
+
+      recognitionRef.current = recognition
+      recognition.start()
+
+    } catch (error) {
+      console.error('Error starting speech recognition:', error)
+      setIsRecording(false)
+      alert('Failed to start speech recognition. Please try again.')
     }
   }
 

@@ -205,11 +205,31 @@
 .btn-recording {
   background: linear-gradient(135deg, #ef4444, #dc2626);
   animation: pulse-recording 1.5s infinite;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
 }
 
 @keyframes pulse-recording {
-  0%, 100% { box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
-  50% { box-shadow: 0 0 30px rgba(239, 68, 68, 0.5); }
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
+    transform: scale(1.02);
+  }
+}
+
+/* Mobile speech recognition improvements */
+@media (hover: none) and (pointer: coarse) {
+  .btn-recording {
+    animation-duration: 1s; /* Faster pulse on touch devices */
+  }
+
+  /* Ensure speech recognition works well on mobile */
+  .thought-input {
+    -webkit-user-select: text; /* Allow text selection for speech results */
+    user-select: text;
+  }
 }
 
 /* Response panel */
