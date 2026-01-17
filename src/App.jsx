@@ -8,10 +8,80 @@ function App() {
   const [isRecording, setIsRecording] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showPaywall, setShowPaywall] = useState(false)
+  const FREE_FLIPS = 3
+  const [isPro, setIsPro] = useState(() => localStorage.getItem('flipPro') === 'true')
+  const [flipsToday, setFlipsToday] = useState(() => {
+    const saved = localStorage.getItem('flipCount')
+    if (saved) {
+      const { count, date } = JSON.parse(saved)
+      // Reset if it's a new day
+      if (date !== new Date().toDateString()) {
+        return 0
+      }
+      return count
+    }
+    return 0
+  })
+
   const [settings, setSettings] = useState(() => {
     const saved = localStorage.getItem('flipSettings')
-    return saved ? JSON.parse(saved) : { anthropicKey: '', elevenLabsKey: '', voiceId: '' }
+    return saved ? JSON.parse(saved) : {
+      openaiKey: '',
+      elevenLabsKey: '',
+      voiceId: 'EXAVITQu4vr4xnSDxMaL', // Default: Sarah
+      language: 'en',
+      accent: 'american'
+    }
   })
+
+  // Voices organized by accent
+  const voices = {
+    american: [
+      { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', desc: 'Female 🇺🇸' },
+      { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel', desc: 'Female 🇺🇸' },
+      { id: 'jsCqWAovK2LkecY7zXl4', name: 'Freya', desc: 'Female 🇺🇸' },
+      { id: 'ErXwobaYiN019PkySvjV', name: 'Antoni', desc: 'Male 🇺🇸' },
+      { id: 'TxGEqnHWrfWFTfGW9XjX', name: 'Josh', desc: 'Male 🇺🇸' },
+      { id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold', desc: 'Male 🇺🇸' },
+      { id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', desc: 'Male 🇺🇸' }
+    ],
+    british: [
+      { id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda', desc: 'Female 🇬🇧' },
+      { id: 'ThT5KcBeYPX3keUQqHPh', name: 'Dorothy', desc: 'Female 🇬🇧' },
+      { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', desc: 'Male 🇬🇧' },
+      { id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George', desc: 'Male 🇬🇧' }
+    ],
+    australian: [
+      { id: 'LcqN2tRlIq9W2KjZVbDJ', name: 'Olivia', desc: 'Female 🇦🇺' }
+    ],
+    spanish: [
+      { id: 'g5CIjZEefAph4nQFvHAz', name: 'Valentino', desc: 'Male 🇪🇸' },
+      { id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice', desc: 'Female 🇪🇸' },
+      { id: 'pqHfZKP75CvOlQylNhV4', name: 'Diego', desc: 'Male 🇲🇽' },
+      { id: 'XB0fDUnXU5powFXDhCwa', name: 'Sofía', desc: 'Female 🇲🇽' },
+      { id: 'bVMeCyTHy58xNoL34h3p', name: 'Carlos', desc: 'Male 🇦🇷' },
+      { id: 'FGY2WhTYpPnrIDTdsKH5', name: 'Laura', desc: 'Female 🇨🇴' },
+      { id: 'TX3LPaxmHKxFdv7VOQHJ', name: 'Elena', desc: 'Female 🌎' },
+      { id: 'iP95p4xoKVk53GoZ742B', name: 'Mateo', desc: 'Male 🌎' }
+    ],
+    french: [
+      { id: '9tbHKVDTJ7lUR2MXYbJ6', name: 'Denis', desc: 'Male 🇫🇷' },
+      { id: 'oWAxZDx7w5VEj9dCyTpo', name: 'Charlotte', desc: 'Female 🇫🇷' }
+    ],
+    german: [
+      { id: 'ODq5zmih8GrVes37Dizd', name: 'Arnold', desc: 'Male 🇩🇪' }
+    ]
+  }
+
+  const accents = [
+    { code: 'american', name: 'American 🇺🇸' },
+    { code: 'british', name: 'British 🇬🇧' },
+    { code: 'australian', name: 'Australian 🇦🇺' },
+    { code: 'spanish', name: 'Spanish 🌎' },
+    { code: 'french', name: 'French 🇫🇷' },
+    { code: 'german', name: 'German 🇩🇪' }
+  ]
   
   const audioRef = useRef(null)
   const mediaRecorderRef = useRef(null)
@@ -20,24 +90,58 @@ function App() {
     localStorage.setItem('flipSettings', JSON.stringify(settings))
   }, [settings])
 
+  // Check for successful payment return or admin code
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('success') === 'true') {
+      setIsPro(true)
+      localStorage.setItem('flipPro', 'true')
+      window.history.replaceState({}, '', '/') // Clean URL
+    }
+    // Secret admin code: ?rriobrave=1
+    if (params.get('rriobrave') === '1') {
+      setIsPro(true)
+      setFlipsToday(0)
+      localStorage.setItem('flipPro', 'true')
+      localStorage.removeItem('flipCount')
+      window.history.replaceState({}, '', '/') // Clean URL
+      alert('🎚️ PRO MODE ACTIVATED - You are now Pro!')
+    }
+  }, [])
+
+  // Save flip count
+  useEffect(() => {
+    localStorage.setItem('flipCount', JSON.stringify({
+      count: flipsToday,
+      date: new Date().toDateString()
+    }))
+  }, [flipsToday])
+
   const flipThought = async () => {
     if (!thought.trim() || isLoading) return
 
+    // Check usage limit (unless Pro)
+    if (!isPro && flipsToday >= FREE_FLIPS) {
+      setShowPaywall(true)
+      return
+    }
+
     setIsLoading(true)
     setResponse('')
+    setFlipsToday(prev => prev + 1)
 
     try {
       const res = await fetch('/api/flip', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           thought: thought.trim(),
-          apiKey: settings.anthropicKey || ''
+          apiKey: settings.openaiKey || ''
         })
       })
 
       if (!res.ok) throw new Error('Failed to flip thought')
-      
+
       const data = await res.json()
       setResponse(data.flipped)
     } catch (error) {
@@ -68,7 +172,7 @@ function App() {
 
       const audioBlob = await res.blob()
       const audioUrl = URL.createObjectURL(audioBlob)
-      
+
       if (audioRef.current) {
         audioRef.current.src = audioUrl
         audioRef.current.play()
@@ -143,6 +247,13 @@ function App() {
           <h1>FLIP THE SWITCH</h1>
         </div>
         <p className="tagline">Transform your thoughts. You don't suck...that much.</p>
+        {!isPro && (
+          <p className="flip-counter">
+            {FREE_FLIPS - flipsToday} free flips left today
+            <button className="upgrade-link" onClick={() => setShowPaywall(true)}>Go Pro</button>
+          </p>
+        )}
+        {isPro && <p className="pro-badge">⭐ PRO</p>}
       </header>
 
       <main className="main">
@@ -255,13 +366,13 @@ function App() {
             <h2>Settings</h2>
             
             <div className="form-group">
-              <label htmlFor="anthropicKey">Anthropic API Key</label>
+              <label htmlFor="openaiKey">OpenAI API Key</label>
               <input
-                id="anthropicKey"
+                id="openaiKey"
                 type="password"
-                placeholder="sk-ant-..."
-                value={settings.anthropicKey}
-                onChange={(e) => setSettings(s => ({ ...s, anthropicKey: e.target.value }))}
+                placeholder="sk-..."
+                value={settings.openaiKey}
+                onChange={(e) => setSettings(s => ({ ...s, openaiKey: e.target.value }))}
               />
             </div>
 
@@ -277,15 +388,34 @@ function App() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="voiceId">Voice ID (optional)</label>
-              <input
+              <label htmlFor="accent">Voice Accent</label>
+              <select
+                id="accent"
+                value={settings.accent || 'american'}
+                onChange={(e) => setSettings(s => ({
+                  ...s,
+                  accent: e.target.value,
+                  voiceId: voices[e.target.value][0].id // Set to first voice of new accent
+                }))}
+              >
+                {accents.map(accent => (
+                  <option key={accent.code} value={accent.code}>{accent.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="voiceId">Voice</label>
+              <select
                 id="voiceId"
-                type="text"
-                placeholder="Default: Sarah (EXAVITQu4vr4xnSDxMaL)"
                 value={settings.voiceId}
                 onChange={(e) => setSettings(s => ({ ...s, voiceId: e.target.value }))}
-              />
-      </div>
+              >
+                {voices[settings.accent || 'american'].map(voice => (
+                  <option key={voice.id} value={voice.id}>{voice.name} - {voice.desc}</option>
+                ))}
+              </select>
+            </div>
 
             <div className="modal-actions">
               <button className="btn btn-secondary" onClick={() => setShowSettings(false)}>
@@ -296,8 +426,36 @@ function App() {
         </div>
       )}
 
-      <audio 
-        ref={audioRef} 
+      {showPaywall && (
+        <div className="modal-overlay" onClick={() => setShowPaywall(false)}>
+          <div className="modal paywall-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>You've used your free flips! 🎚️</h2>
+            <p className="paywall-message">
+              Look, mental health support shouldn't be expensive. That's why we keep it cheap.
+            </p>
+
+            <div className="price-box">
+              <span className="price">$2.99</span>
+              <span className="price-period">/month</span>
+            </div>
+
+            <ul className="pro-features">
+              <li>✓ Unlimited flips</li>
+              <li>✓ All voices & accents</li>
+              <li>✓ Support someone with PTSD building cool shit</li>
+            </ul>
+
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => setShowPaywall(false)}>
+                Maybe tomorrow
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <audio
+        ref={audioRef}
         onEnded={() => setIsPlaying(false)}
         onError={() => setIsPlaying(false)}
       />
