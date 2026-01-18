@@ -128,7 +128,7 @@ app.get('*', (req, res) => {
 
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
-  console.log(`🎚️  FLIP THE SWITCH server running on port ${PORT}`)
+  console.log(`🎚️  FLIP THE SCRIPT server running on port ${PORT}`)
   console.log(`   OpenAI key loaded: ${!!OPENAI_API_KEY}`)
   console.log(`   Eleven Labs key loaded: ${!!ELEVEN_LABS_API_KEY}`)
 })

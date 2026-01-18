@@ -1,4 +1,4 @@
-# 🎚️ FLIP THE SWITCH
+# 🎚️ FLIP THE SCRIPT
 
 ## LISTEN UP, MAGGOT.
 
@@ -10,7 +10,7 @@ Your brain is a LIAR. It's feeding you GARBAGE. And you've been EATING IT like i
 
 NOT ANYMORE.
 
-**FLIP THE SWITCH** is here to take that negative self-talk, grab it by the throat, and FLIP IT into something that actually resembles THE TRUTH.
+**FLIP THE SCRIPT** is here to take that negative self-talk, grab it by the throat, and FLIP IT into something that actually resembles THE TRUTH.
 
 ---
 
