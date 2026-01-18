@@ -270,7 +270,7 @@ function App() {
         <p className="tagline">Transform your thoughts. You don't suck...that much.</p>
         {!isPro && (
           <p className="flip-counter">
-            {FREE_FLIPS - flipsThisMonth} free this month
+            {FREE_FLIPS - flipsThisMonth} flips left this month
             <button className="upgrade-link" onClick={() => setShowPaywall(true)}>Go Pro</button>
           </p>
         )}
