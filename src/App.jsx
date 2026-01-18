@@ -11,12 +11,21 @@ function App() {
   const [showPaywall, setShowPaywall] = useState(false)
   const FREE_FLIPS = 3
   const [isPro, setIsPro] = useState(() => localStorage.getItem('flipPro') === 'true')
-  const [flipsToday, setFlipsToday] = useState(() => {
+  const [flipsThisMonth, setFlipsThisMonth] = useState(() => {
     const saved = localStorage.getItem('flipCount')
     if (saved) {
-      const { count, date } = JSON.parse(saved)
-      // Reset if it's a new day
-      if (date !== new Date().toDateString()) {
+      const { count, month, year } = JSON.parse(saved)
+      const now = new Date()
+      const currentMonth = now.getMonth()
+      const currentYear = now.getFullYear()
+
+      // Reset if it's a new month
+      if (month !== currentMonth || year !== currentYear) {
+        // Give existing users their remaining daily flips as grace period this month
+        if (month !== undefined && year !== undefined) {
+          const remainingGrace = Math.max(0, FREE_FLIPS - count)
+          return remainingGrace
+        }
         return 0
       }
       return count
@@ -98,7 +107,7 @@ function App() {
     // Secret admin code: ?rriobrave=1
     if (params.get('rriobrave') === '1') {
       setIsPro(true)
-      setFlipsToday(0)
+      setFlipsThisMonth(0)
       localStorage.setItem('flipPro', 'true')
       localStorage.removeItem('flipCount')
       window.history.replaceState({}, '', '/') // Clean URL
@@ -108,24 +117,26 @@ function App() {
 
   // Save flip count
   useEffect(() => {
+    const now = new Date()
     localStorage.setItem('flipCount', JSON.stringify({
-      count: flipsToday,
-      date: new Date().toDateString()
+      count: flipsThisMonth,
+      month: now.getMonth(),
+      year: now.getFullYear()
     }))
-  }, [flipsToday])
+  }, [flipsThisMonth])
 
   const flipThought = async () => {
     if (!thought.trim() || isLoading) return
 
     // Check usage limit (unless Pro)
-    if (!isPro && flipsToday >= FREE_FLIPS) {
+    if (!isPro && flipsThisMonth >= FREE_FLIPS) {
       setShowPaywall(true)
       return
     }
 
     setIsLoading(true)
     setResponse('')
-    setFlipsToday(prev => prev + 1)
+    setFlipsThisMonth(prev => prev + 1)
 
     try {
       const res = await fetch('/api/flip', {
@@ -259,7 +270,7 @@ function App() {
         <p className="tagline">Transform your thoughts. You don't suck...that much.</p>
         {!isPro && (
           <p className="flip-counter">
-            {FREE_FLIPS - flipsToday} free flips left today
+            {FREE_FLIPS - flipsThisMonth} free this month
             <button className="upgrade-link" onClick={() => setShowPaywall(true)}>Go Pro</button>
           </p>
         )}
@@ -418,25 +429,27 @@ function App() {
       {showPaywall && (
         <div className="modal-overlay" onClick={() => setShowPaywall(false)}>
           <div className="modal paywall-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>You've used your free flips! 🎚️</h2>
+            <h2>You've used your 3 free flips! 🎚️</h2>
             <p className="paywall-message">
-              Look, mental health support shouldn't be expensive. That's why we keep it cheap.
+              Life gets loud sometimes. Get relief anytime with unlimited access.
             </p>
 
             <div className="price-box">
-              <span className="price">$2.99</span>
+              <span className="price">$3</span>
               <span className="price-period">/month</span>
             </div>
 
+            <p className="paywall-subtitle">For unlimited flips when you need them most</p>
+
             <ul className="pro-features">
-              <li>✓ Unlimited flips</li>
-              <li>✓ All voices & accents</li>
-              <li>✓ Support someone with PTSD building cool shit</li>
+              <li>✓ Unlimited flips anytime</li>
+              <li>✓ All voices & accents worldwide</li>
+              <li>✓ Support mental health innovation</li>
             </ul>
 
             <div className="modal-actions">
               <button className="btn btn-secondary" onClick={() => setShowPaywall(false)}>
-                Maybe tomorrow
+                Maybe next month
               </button>
             </div>
           </div>
