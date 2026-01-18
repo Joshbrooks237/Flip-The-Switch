@@ -265,7 +265,7 @@ function App() {
       <header className="header">
         <div className="logo">
           <img src="/switch.svg" alt="" className="logo-icon" />
-          <h1>FLIP THE SWITCH</h1>
+          <h1>FLIP THE SCRIPT</h1>
         </div>
         <p className="tagline">Transform your thoughts. You don't suck...that much.</p>
         {!isPro && (
